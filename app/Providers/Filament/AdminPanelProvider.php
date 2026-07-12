@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon($branding && $branding->logo_path
                 ? Storage::url($branding->logo_path)
                 : null)
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->registration()
             ->passwordReset()
             ->colors([
