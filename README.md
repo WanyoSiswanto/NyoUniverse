@@ -20,12 +20,14 @@
 - **Database**: PostgreSQL 16
 - **Auth**: Laravel built-in + Filament Shield (Spatie Permission)
 - **Audit Trail**: Spatie Activity Log
-- **Docker**: Ready untuk deployment
 
-## Cara Menjalankan (Docker)
+## Cara Menjalankan (Tanpa Docker)
 
 ### Prerequisites
-- Docker & Docker Compose
+- PHP 8.3+ dengan ekstensi: pgsql, mbstring, xml, curl, zip, gd
+- Composer
+- PostgreSQL 16
+- Node.js & NPM (opsional, untuk compile assets)
 
 ### Langkah-langkah
 
@@ -40,22 +42,38 @@ cd NyoUniverse
 cp .env.example .env
 ```
 
-3. Generate application key:
+3. Install dependencies:
 ```bash
-docker compose run --rm app php artisan key:generate
+composer install
+npm install && npm run build  # Opsional
 ```
 
-4. Jalankan migrasi dan seeder:
+4. Generate application key:
 ```bash
-docker compose run --rm app php artisan migrate --seed
+php artisan key:generate
 ```
 
-5. Jalankan aplikasi:
-```bash
-docker compose up -d
+5. Konfigurasi database di file `.env`:
+```
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=nyouniverse
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
 ```
 
-6. Akses aplikasi di: http://localhost:8080/admin
+6. Jalankan migrasi dan seeder:
+```bash
+php artisan migrate --seed
+```
+
+7. Jalankan aplikasi:
+```bash
+php artisan serve
+```
+
+8. Akses aplikasi di: http://localhost:8000/admin
 
 ### Login Default
 - **Admin**: username `admin`, password `admin123`
