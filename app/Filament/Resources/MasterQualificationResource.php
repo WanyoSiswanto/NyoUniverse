@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\MasterQualificationResource\Pages;
+use App\Models\CustomField;
+use App\Models\MasterQualification;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class MasterQualificationResource extends Resource
+{
+    protected static ?string $model = MasterQualification::class;
+    protected static ?string $navigationIcon = 'heroicon-o-check-badge';
+    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('messages.qualification');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('messages.qualification_item');
+    }
+
+    public static function form(Form $form): Form
+    {
+        $customFields = CustomField::where('category', 'qualification')->orderBy('order')->get();
+
+        $customSchema = [];
+        foreach ($customFields as $field) {
+            $component = match ($field->type) {
+                'number' => Forms\Components\TextInput::make("custom_fields.{$field->key}")
+                    ->numeric()
+                    ->label($field->label),
+                'date' => Forms\Components\DatePicker::make("custom_fields.{$field->key}")
+                    ->label($field->label),
+                'textarea' => Forms\Components\Textarea::make("custom_fields.{$field->key}")
+                    ->label($field->label),
+                default => Forms\Components\TextInput::make("custom_fields.{$field->key}")
+                    ->label($field->label),
+            };
+            $customSchema[] = $component;
+        }
+
+        return $form
+            ->schema([
+                Forms\Components\Section::make(__('messages.basic_info'))
+                    ->schema([
+                        Forms\Components\TextInput::make('code')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->label(__('messages.code')),
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->label(__('messages.name')),
+                        Forms\Components\TextInput::make('location')
+                            ->label(__('messages.location')),
+                        Forms\Components\TextInput::make('department')
+                            ->label(__('messages.department')),
+                        Forms\Components\Select::make('criticality')
+                            ->options(MasterQualification::CRITICALITY_OPTIONS)
+                            ->required()
+                            ->default('major')
+                            ->label(__('messages.criticality')),
+                        Forms\Components\Select::make('frequency')
+                            ->options(MasterQualification::FREQUENCY_OPTIONS)
+                            ->required()
+                            ->default('12')
+                            ->label(__('messages.frequency')),
+                        Forms\Components\Toggle::make('is_active')
+                            ->default(true)
+                            ->label(__('messages.is_active')),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make(__('messages.technical_specs'))
+                    ->schema([
+                        Forms\Components\TextInput::make('equipment_type')
+                            ->label(__('messages.equipment_type')),
+                        Forms\Components\TextInput::make('manufacturer')
+                            ->label(__('messages.manufacturer')),
+                        Forms\Components\TextInput::make('model')
+                            ->label(__('messages.model')),
+                        Forms\Components\TextInput::make('serial_number')
+                            ->label(__('messages.serial_number')),
+                        Forms\Components\TextInput::make('capacity')
+                            ->label(__('messages.capacity')),
+                        Forms\Components\TextInput::make('vendor')
+                            ->label(__('messages.vendor')),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make(__('messages.custom_fields'))
+                    ->schema($customSchema)
+                    ->columns(2)
+                    ->visible(count($customSchema) > 0),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('code')
+                    ->searchable()
+                    ->sortable()
+                    ->label(__('messages.code')),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->label(__('messages.name')),
+                Tables\Columns\TextColumn::make('location')
+                    ->searchable()
+                    ->label(__('messages.location')),
+                Tables\Columns\TextColumn::make('department')
+                    ->searchable()
+                    ->label(__('messages.department')),
+                Tables\Columns\TextColumn::make('criticality')
+                    ->badge()
+                    ->label(__('messages.criticality')),
+                Tables\Columns\TextColumn::make('frequency')
+                    ->formatStateUsing(fn (string $state): string => MasterQualification::FREQUENCY_OPTIONS[$state] ?? $state)
+                    ->label(__('messages.frequency')),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
+                    ->label(__('messages.active')),
+                Tables\Columns\TextColumn::make('equipment_type')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('messages.equipment_type')),
+                Tables\Columns\TextColumn::make('vendor')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('messages.vendor')),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('messages.created_at')),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('criticality')
+                    ->options(MasterQualification::CRITICALITY_OPTIONS)
+                    ->label(__('messages.criticality')),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label(__('messages.active')),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListMasterQualifications::route("/"),
+            'create' => Pages\CreateMasterQualification::route("/create"),
+            'edit' => Pages\EditMasterQualification::route("/{record}/edit"),
+        ];
+    }
+}

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: nyouniverse-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/vendor
+      - /var/www/node_modules
+    networks:
+      - nyouniverse-network
+    depends_on:
+      - db
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=nyouniverse
+      - DB_USERNAME=nyouniverse
+      - DB_PASSWORD=secret
+
+  webserver:
+    image: nginx:alpine
+    container_name: nyouniverse-webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - nyouniverse-network
+    depends_on:
+      - app
+
+  db:
+    image: postgres:16-alpine
+    container_name: nyouniverse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nyouniverse
+      POSTGRES_USER: nyouniverse
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - nyouniverse-network
+
+networks:
+  nyouniverse-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
