@@ -8,6 +8,7 @@ use App\Models\ProgramMapping;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Support\Facades\DB;
 
 class UpcomingScheduleWidget extends BaseWidget
 {
@@ -15,58 +16,65 @@ class UpcomingScheduleWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $calibrations = ProgramCalibration::with('master')
-            ->where('year', now()->year)
-            ->where('status', 'approved')
-            ->whereBetween('planned_month', [now()->month, now()->month + 2])
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => 'calib-' . $item->id,
-                    'code' => $item->master->code,
-                    'name' => $item->master->name,
-                    'type' => __('messages.calibration'),
-                    'month' => $item->planned_month,
-                    'date' => $item->planned_date,
-                ];
-            });
+        $year = now()->year;
+        $startMonth = now()->month;
+        $endMonth = now()->month + 2;
 
-        $qualifications = ProgramQualification::with('master')
-            ->where('year', now()->year)
-            ->where('status', 'approved')
-            ->whereBetween('planned_month', [now()->month, now()->month + 2])
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => 'qual-' . $item->id,
-                    'code' => $item->master->code,
-                    'name' => $item->master->name,
-                    'type' => __('messages.qualification'),
-                    'month' => $item->planned_month,
-                    'date' => $item->planned_date,
-                ];
-            });
+        $calibrationType = str_replace("'", "''", __('messages.calibration'));
+        $qualificationType = str_replace("'", "''", __('messages.qualification'));
+        $mappingType = str_replace("'", "''", __('messages.mapping'));
 
-        $mappings = ProgramMapping::with('master')
-            ->where('year', now()->year)
-            ->where('status', 'approved')
-            ->whereBetween('planned_month', [now()->month, now()->month + 2])
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => 'map-' . $item->id,
-                    'code' => $item->master->code,
-                    'name' => $item->master->name,
-                    'type' => __('messages.mapping'),
-                    'month' => $item->planned_month,
-                    'date' => $item->planned_date,
-                ];
-            });
+        $calibrations = ProgramCalibration::query()
+            ->select([
+                'program_calibration.id',
+                'master_calibration.code as code',
+                'master_calibration.name as name',
+                DB::raw("'{$calibrationType}' as type"),
+                'program_calibration.planned_month as month',
+                'program_calibration.planned_date as date',
+            ])
+            ->join('master_calibration', 'master_calibration.id', '=', 'program_calibration.master_id')
+            ->where('program_calibration.year', $year)
+            ->where('program_calibration.status', 'approved')
+            ->whereBetween('program_calibration.planned_month', [$startMonth, $endMonth]);
 
-        $allItems = $calibrations->concat($qualifications)->concat($mappings)->sortBy('month');
+        $qualifications = ProgramQualification::query()
+            ->select([
+                'program_qualification.id',
+                'master_qualification.code as code',
+                'master_qualification.name as name',
+                DB::raw("'{$qualificationType}' as type"),
+                'program_qualification.planned_month as month',
+                'program_qualification.planned_date as date',
+            ])
+            ->join('master_qualification', 'master_qualification.id', '=', 'program_qualification.master_id')
+            ->where('program_qualification.year', $year)
+            ->where('program_qualification.status', 'approved')
+            ->whereBetween('program_qualification.planned_month', [$startMonth, $endMonth]);
+
+        $mappings = ProgramMapping::query()
+            ->select([
+                'program_mapping.id',
+                'master_mapping.code as code',
+                'master_mapping.name as name',
+                DB::raw("'{$mappingType}' as type"),
+                'program_mapping.planned_month as month',
+                'program_mapping.planned_date as date',
+            ])
+            ->join('master_mapping', 'master_mapping.id', '=', 'program_mapping.master_id')
+            ->where('program_mapping.year', $year)
+            ->where('program_mapping.status', 'approved')
+            ->whereBetween('program_mapping.planned_month', [$startMonth, $endMonth]);
+
+        $query = ProgramCalibration::query()
+            ->fromSub(
+                $calibrations->unionAll($qualifications->toBase())->unionAll($mappings->toBase()),
+                'upcoming_schedules',
+            )
+            ->orderBy('month');
 
         return $table
-            ->query(fn () => \Illuminate\Database\Eloquent\Collection::make($allItems))
+            ->query(fn () => $query)
             ->heading(__('messages.upcoming_schedules'))
             ->columns([
                 Tables\Columns\TextColumn::make('code')
