@@ -3,7 +3,7 @@
         'name' => 'nyouniverse/nyouniverse',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '39b72c755ff60a2ff2db36b4aa59de9588a8ae76',
+        'reference' => '3a1c2a32ececdd5b4d999bca7d25541e2167a28d',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -889,7 +889,7 @@
         'nyouniverse/nyouniverse' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '39b72c755ff60a2ff2db36b4aa59de9588a8ae76',
+            'reference' => '3a1c2a32ececdd5b4d999bca7d25541e2167a28d',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
