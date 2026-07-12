@@ -7,10 +7,10 @@
     <meta name="author" content="NyoUniverse">
     <title>{{ config('app.name', 'NyoUniverse') }} - Welcome</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/welcome.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-p0Lh5K6W3sPsP/4u1B7YU2fysydnEDx7vWIXJThpDHVoj4D4qY6hVLh4r+G7lPnKZx0HTWf0L0E0uJ6VY6bYlA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
